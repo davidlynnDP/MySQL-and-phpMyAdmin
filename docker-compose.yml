@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_container
+    environment:
+      MYSQL_ROOT_PASSWORD: mypassword  # Contraseña del usuario root de MySQL
+      MYSQL_DATABASE: mydatabase       # Base de datos inicial
+      MYSQL_USER: myuser               # Usuario adicional
+      MYSQL_PASSWORD: mypassword       # Contraseña del usuario adicional
+    ports:
+      - "3306:3306"  # Puerto en el que se expone MySQL
+    volumes:
+      - mysqldata:/var/lib/mysql       # Volumen persistente para los datos de MySQL
+      - ./init-scripts:/docker-entrypoint-initdb.d  # Scripts de inicialización
+    restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  phpmyadmin:
+    image: phpmyadmin:5.2
+    container_name: phpmyadmin_container
+    environment:
+      PMA_HOST: mysql  # Nombre del servicio de MySQL
+      PMA_USER: myuser  # Usuario de MySQL para la conexión
+      PMA_PASSWORD: mypassword  # Contraseña del usuario
+    ports:
+      - "8082:80"  # Exponer phpMyAdmin en el puerto 8082
+    depends_on:
+      - mysql
+    restart: always
+
+volumes:
+  mysqldata:
+    driver: local
+
+# MySQL connection URLs:
+# mysql://myuser:mypassword@localhost:3306/mydatabase
+# mysql://myuser:mypassword@mysql:3306/mydatabase
